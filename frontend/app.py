@@ -5,9 +5,11 @@ import pandas as pd
 import random
 from datetime import datetime
 
+# --- PATH SETUP ---
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from backend.rag_engine import generate_answer
 
+# --- PAGE CONFIG ---
 st.set_page_config(
     page_title="Saarthi (सारथी) AI",
     page_icon="☸️",
@@ -15,6 +17,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# --- FAMOUS QUOTES (Sanskrit + English) ---
 FAMOUS_QUOTES = [
     {
         "sanskrit": "कर्मण्येवाधिकारस्ते मा फलेषु कदाचन ।",
@@ -43,27 +46,43 @@ FAMOUS_QUOTES = [
     }
 ]
 
+# --- GLOBAL THEME / CSS ---
 st.markdown("""
 <style>
-/* Import Google Fonts: Martel (Sanskrit), Merriweather (Text), Poppins (Headers) */
+/* Import Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Martel:wght@300;400;800&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Poppins:wght@300;400;600&display=swap');
 
-/* Main Background - Soft Spiritual Gold/White Theme */
+/* --- NUCLEAR TEXT COLOR FIX --- */
+/* Force ALL text inside the main app to be dark, overriding Streamlit Dark Mode */
+.stApp, .stMarkdown, p, h1, h2, h3, h4, h5, h6, span, div, li {
+    color: #1e293b !important;
+}
+
+/* Exception: Sidebar text should remain light */
+section[data-testid="stSidebar"] p, 
+section[data-testid="stSidebar"] span, 
+section[data-testid="stSidebar"] div, 
+section[data-testid="stSidebar"] h1, 
+section[data-testid="stSidebar"] h2 {
+    color: #f1f5f9 !important;
+}
+
+/* Main Background */
 .stApp {
     background: linear-gradient(135deg, #fdfbf7 0%, #f4f4f9 100%);
 }
 
-/* Typography Overrides */
+/* Typography */
 h1, h2, h3 {
     font-family: 'Poppins', sans-serif;
-    color: #3d342b !important; /* Dark Earthy Tone */
+    color: #3d342b !important;
 }
 
-/* Sanskrit Text Styling */
+/* Sanskrit Text */
 .sanskrit-text {
     font-family: 'Martel', serif;
     font-weight: 800;
-    color: #8b4513; /* SaddleBrown */
+    color: #8b4513 !important; /* Force SaddleBrown */
 }
 
 /* Chat Bubbles */
@@ -75,19 +94,31 @@ h1, h2, h3 {
     font-family: 'Merriweather', serif;
 }
 
+/* FORCE BLACK TEXT INSIDE CHAT BUBBLES */
+.stChatMessage p, .stChatMessage div, .stChatMessage span, .stChatMessage li {
+    color: #000000 !important;
+}
+
 /* User Bubble */
 .stChatMessage.user {
-    background: linear-gradient(135deg, #fff0e6 0%, #fff 100%) !important; /* Soft Orange Tint */
-    border-left: 4px solid #d35400; /* Saffron Orange */
+    background: linear-gradient(135deg, #fff0e6 0%, #fff 100%) !important;
+    border-left: 4px solid #d35400;
 }
 
 /* AI Bubble */
 .stChatMessage.assistant {
-    background: linear-gradient(135deg, #f4fcfc 0%, #fff 100%) !important; /* Soft Teal Tint */
-    border-left: 4px solid #00897b; /* Teal */
+    background: linear-gradient(135deg, #f4fcfc 0%, #fff 100%) !important;
+    border-left: 4px solid #00897b;
 }
 
-/* Header Box (Replaced with new Saarthi Branding) */
+/* Input Box Styling */
+textarea, input {
+    background-color: #ffffff !important;
+    color: #000000 !important; /* Force input text black */
+    border: 1px solid #ccc !important;
+}
+
+/* Header Box */
 .header-box {
     background: linear-gradient(90deg, #2c3e50 0%, #4ca1af 100%);
     padding: 30px;
@@ -96,6 +127,10 @@ h1, h2, h3 {
     text-align: center;
     margin-bottom: 25px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+/* Force header text white */
+.header-box div, .header-box p, .header-box h1 {
+    color: #ffffff !important;
 }
 .header-title {
     font-size: 2.5rem;
@@ -112,11 +147,11 @@ h1, h2, h3 {
 .header-sanskrit {
     font-family: 'Martel', serif;
     font-size: 1.1rem;
-    color: #f1c40f !important; /* Gold */
+    color: #f1c40f !important; /* Force Gold */
     margin-top: 15px;
 }
 
-/* Sidebar Styling */
+/* Sidebar Background */
 section[data-testid="stSidebar"] {
     background-color: #1a1a1a;
 }
@@ -142,19 +177,18 @@ with st.sidebar:
     st.markdown("<h2 style='color: white !important;'>Saarthi AI</h2>", unsafe_allow_html=True)
     st.caption("☸️ Your Digital Charioteer")
 
-    # Shloka Card
     daily_shloka = get_random_shloka()
     if daily_shloka:
         st.markdown(f"""
         <div style="background: rgba(255,255,255,0.08); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); margin-top: 20px;">
-            <p style="color: #94a3b8; font-size: 0.7rem; margin:0; text-transform: uppercase; letter-spacing: 1px;">✨ Daily Wisdom</p>
-            <p style="color: #f39c12; font-family: 'Martel', serif; font-size: 1.05rem; line-height: 1.5; margin: 10px 0;">
+            <p style="color: #94a3b8 !important; font-size: 0.7rem; margin:0; text-transform: uppercase; letter-spacing: 1px;">✨ Daily Wisdom</p>
+            <p style="color: #f39c12 !important; font-family: 'Martel', serif; font-size: 1.05rem; line-height: 1.5; margin: 10px 0;">
                 {daily_shloka['text']}
             </p>
-            <p style="color: #dcdcdc; font-size: 0.85rem; font-style: italic;">
+            <p style="color: #dcdcdc !important; font-size: 0.85rem; font-style: italic;">
                 "{daily_shloka['meaning'][:100]}..."
             </p>
-            <div style="text-align: right; color: #7f8c8d; font-size: 0.75rem; margin-top: 5px;">— {daily_shloka['ref']}</div>
+            <div style="text-align: right; color: #7f8c8d !important; font-size: 0.75rem; margin-top: 5px;">— {daily_shloka['ref']}</div>
         </div>
         """, unsafe_allow_html=True)
     
@@ -163,7 +197,7 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
 
-# --- MAIN HERO SECTION (BRANDED) ---
+# --- MAIN HERO SECTION ---
 quote = random.choice(FAMOUS_QUOTES)
 
 st.markdown(f"""
@@ -179,17 +213,15 @@ st.markdown(f"""
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display Chat
 for message in st.session_state.messages:
     if message["role"] == "user":
-        avatar_url = "https://cdn-icons-png.flaticon.com/512/4140/4140048.png" # User Avatar
+        avatar_url = "https://cdn-icons-png.flaticon.com/512/4140/4140048.png"
     else:
-        avatar_url = "https://cdn-icons-png.flaticon.com/512/3663/3663344.png" # Saarthi Avatar
+        avatar_url = "https://cdn-icons-png.flaticon.com/512/3663/3663344.png"
 
     with st.chat_message(message["role"], avatar=avatar_url):
         st.markdown(message["content"])
 
-# Handle Input
 if prompt := st.chat_input("Arjuna asks Krishna... (Type your question)"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user", avatar="https://cdn-icons-png.flaticon.com/512/4140/4140048.png"):
