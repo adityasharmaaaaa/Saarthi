@@ -28,10 +28,7 @@ def check_for_exact_reference(query):
     """
     SCHOLAR MODE: Detects '2.47' or 'Chapter 2 Verse 47' and fetches EXACT row.
     """
-    # Regex 1: Matches "2.47" or "2:47"
     simple_pattern = re.search(r"(\d+)[\.:](\d+)", query)
-    
-    # Regex 2: Matches "Chapter 2 Verse 47" (flexible spacing)
     verbose_pattern = re.search(r"chapter\s*(\d+).*verse\s*(\d+)", query, re.IGNORECASE)
     
     match = simple_pattern or verbose_pattern
@@ -43,7 +40,6 @@ def check_for_exact_reference(query):
         
         found_verses = []
         
-        # Look through ALL CSV files (Gita, Sutras, etc.)
         csv_files = glob.glob(os.path.join(DATA_FOLDER, "*.csv"))
         
         for file_path in csv_files:
@@ -95,20 +91,37 @@ def retrieve_verses(query, n_results=3):
         
     return context_text, sources
 
-def generate_answer(user_query, chat_history=[]):
-    print(f"🔍 Processing: '{user_query}'...")
+def generate_answer(user_query, chat_history=[], mode="Beginner"):
+    if not groq_client:
+        return "⚠️ System Error: GROQ_API_KEY is missing.", []
+
+    print(f"🔍 Processing ({mode} Mode): '{user_query}'...")
     
-    # 1. RETRIEVE
     context, sources = retrieve_verses(user_query)
     
-    # 2. AUGMENT
-    system_prompt = """
-    You are a wise Vedic Counselor. 
-    Use the provided text to answer the user.
+    # DYNAMIC SYSTEM PROMPT
+    if mode == "Scholar":
+        tone_instruction = """
+        - You are a Pundit and Vedantic Scholar.
+        - Use precise Sanskrit terminology (e.g., 'Dharma', 'Gunas', 'Vrittis').
+        - Explain the verse with deep philosophical rigor.
+        - Quote the texts formally.
+        """
+    else: # Beginner
+        tone_instruction = """
+        - You are a friendly Guide explaining to a complete beginner.
+        - Use simple English and modern analogies (like work, sports, or technology).
+        - Avoid heavy jargon unless you explain it.
+        - Focus on practical application in daily life.
+        """
+
+    system_prompt = f"""
+    You are 'Saarthi', a wise Vedic Counselor.
+    {tone_instruction}
     
-    - If the user asked for a specific verse (Scholar Mode), explain it deeply.
-    - If the user asked a general question, use the verses to provide guidance.
-    - Always remain empathetic and grounded in the text.
+    Use the provided reference text to answer the user.
+    - If the context contains a "Direct Reference", explain that specific verse.
+    - If the context is a general search, guide the user empathically.
     """
     
     messages = [{"role": "system", "content": system_prompt}]
@@ -122,7 +135,6 @@ def generate_answer(user_query, chat_history=[]):
     """
     messages.append({"role": "user", "content": final_user_content})
     
-    # 3. GENERATE
     try:
         chat_completion = groq_client.chat.completions.create(
             messages=messages,
